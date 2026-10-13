@@ -28,12 +28,14 @@
 | **引力弹弓** |真实限制性三体积分 + 速度矢量箭头 + Δv实测（参数经 Python 网格验证：b=0.9 可获 ~50% 加速） | ✅  |
 
 | 场景 |演示| 
-|---|---|-
+|---|---|
 | **三体问题** |<img width="1257" height="1262" alt="image" src="https://github.com/user-attachments/assets/3bedbaf3-6f7c-48fc-af48-366f72accbd1" />| 
 | **黑洞·引力透镜** | <img width="1558" height="1240" alt="img_v3_0216e_be5c5f6e-4336-467f-bb8e-cee0dd5c7bdg" src="https://github.com/user-attachments/assets/220b8b95-b335-4366-b679-df0980cb4778" />|
 | **费米悖论** |<img width="1556" height="1274" alt="image" src="https://github.com/user-attachments/assets/b88e16a1-7919-4434-bbd9-840fdf8faae7" />|
 | **洛希极限** |<img width="1285" height="1253" alt="image" src="https://github.com/user-attachments/assets/40d391e6-5b82-485e-8635-4833a14dcbdc" />|
 | **引力弹弓** |<img width="1542" height="1266" alt="20261013231557_rec_-convert" src="https://github.com/user-attachments/assets/46fbfd5c-f1cb-4c9c-8d8a-086c4b156b7f" />|
+
+
 **几个亮点设计：**
 - **每个场景右上角都有"假设与边界"标注**（黑洞标注"示意渲染非GR数值模拟"、费米标注"非外星人存在概率"）——和项目的科学红线完全一致
 - 三个真实模拟场景（三体/洛希/弹弓）直接GitHub 仓库里 MUM-Gravity 的能力叙事
