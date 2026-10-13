@@ -1,0 +1,47 @@
+{
+  "seed": 42,
+  "version": "mum-gravity-0.1-pilot",
+  "dt_teacher": 0.002,
+  "output_dt": 0.01,
+  "n_frames": 128,
+  "G": 1.0,
+  "note": "sampled directly in normalized units G=M0=L0=1; teacher = self-written RK4 float64 (REBOUND unavailable)",
+  "systems": {
+    "two_body": {
+      "n": 400,
+      "split": {
+        "train": 280,
+        "val": 60,
+        "test": 60
+      },
+      "truncated": 0,
+      "truncation_rate": 0.0,
+      "ecc_range": [
+        0.0007919951411088811,
+        0.7995375273793504
+      ],
+      "mass_ratio_range": [
+        1.0562447966355006,
+        99.8902633266879
+      ]
+    },
+    "three_body": {
+      "n": 800,
+      "split": {
+        "train": 600,
+        "val": 100,
+        "test": 100
+      },
+      "close_bucket_n": 80,
+      "truncated": 61,
+      "truncation_rate": 0.07625,
+      "min_init_sep_range": [
+        0.05011120315719352,
+        2.131471867015893
+      ],
+      "mass_ratio_max": 10.0,
+      "mass_ratio_note": "pilot narrowed to 10:1 (from 100:1 in tech plan v2.0)"
+    }
+  },
+  "wall_time_sec": 4.78791069984436
+}

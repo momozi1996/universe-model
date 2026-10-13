@@ -1,0 +1,38 @@
+{
+  "name": "mum-gravity-0.1-pilot",
+  "seed": 42,
+  "G": 1.0,
+  "model": {
+    "hidden_dim": 128,
+    "message_layers": 4
+  },
+  "data": {
+    "n_two_body": 400,
+    "n_three_body": 800,
+    "two_body_split": {"train": 280, "val": 60, "test": 60},
+    "three_body_split": {"train": 600, "val": 100, "test": 100},
+    "dt_teacher": 0.002,
+    "output_dt": 0.01,
+    "n_frames": 128,
+    "min_separation_truncate": 0.02,
+    "two_body": {"ecc_max": 0.8, "mass_ratio_max": 100.0, "a_min": 0.4, "a_max": 1.2},
+    "three_body": {"mass_ratio_max": 10.0, "min_init_sep": 0.1, "close_bucket_frac": 0.1,
+                    "close_bucket_sep": [0.05, 0.1]}
+  },
+  "training": {
+    "lr": 3e-4,
+    "weight_decay": 1e-5,
+    "grad_clip": 1.0,
+    "lr_warmup_steps": 300,
+    "batch_frames": 2048,
+    "batch_traj": 32,
+    "frames_per_epoch": 60000,
+    "stages": {
+      "S1": {"epochs": 20, "loss": "force"},
+      "S2": {"epochs": 20, "loss": "force+state"},
+      "S3": {"epochs": 30, "loss": "force+state+rollout+0.01*energy",
+              "rollout_steps_warm": 4, "rollout_steps_final": 8, "energy_weight": 0.01}
+    }
+  },
+  "limits": {"max_steps": 10000, "min_separation": 0.02, "max_radius": 10.0}
+}
