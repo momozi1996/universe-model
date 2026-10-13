@@ -1,0 +1,1121 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MOMO Universe Model — 宇宙问题 3D 演示</title>
+<style>
+  :root{
+    --amber:#f0a04b; --amber-hi:#ffd9a0; --ink:#e8e2d5; --dim:#9a917f;
+    --panel:rgba(10,12,20,.58); --line:rgba(255,180,90,.18);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{width:100%;height:100%;overflow:hidden;background:#05060a;color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Microsoft YaHei","Noto Sans CJK SC",sans-serif;}
+  #stage{position:fixed;inset:0}
+  #stage canvas{display:block}
+  #vignette{position:fixed;inset:0;pointer-events:none;z-index:5;
+    background:radial-gradient(ellipse at 50% 45%,transparent 55%,rgba(0,0,0,.55) 100%);}
+  /* ---- nav ---- */
+  nav{position:fixed;top:0;left:0;right:0;height:56px;z-index:20;display:flex;align-items:center;
+    padding:0 22px;gap:26px;background:rgba(6,7,12,.62);backdrop-filter:blur(10px);
+    border-bottom:1px solid rgba(255,255,255,.07);}
+  .logo{font-size:15px;font-weight:700;letter-spacing:.12em;color:var(--amber-hi);white-space:nowrap}
+  .logo em{font-style:normal;color:var(--amber)}
+  .tabs{display:flex;gap:4px;flex:1;overflow-x:auto}
+  .tab{appearance:none;border:0;background:transparent;color:var(--dim);font-size:13px;
+    padding:8px 14px;cursor:pointer;border-bottom:2px solid transparent;letter-spacing:.06em;white-space:nowrap;
+    transition:color .2s,border-color .2s;}
+  .tab:hover{color:var(--ink)}
+  .tab.active{color:var(--amber-hi);border-bottom-color:var(--amber)}
+  /* ---- scene ui ---- */
+  .scene-ui{position:fixed;inset:0;z-index:10;display:none;pointer-events:none}
+  .scene-ui.active{display:block}
+  .card{position:absolute;background:var(--panel);border:1px solid var(--line);border-radius:12px;
+    backdrop-filter:blur(10px);pointer-events:auto}
+  .info{top:76px;left:24px;max-width:340px;padding:16px 18px}
+  .info h1{font-size:20px;color:var(--amber-hi);letter-spacing:.05em;margin-bottom:8px}
+  .info h1 span{display:block;font-size:11px;color:var(--dim);font-weight:400;letter-spacing:.14em;margin-top:3px}
+  .info p{font-size:12.5px;line-height:1.75;color:#cfc8ba}
+  .assume{top:76px;right:24px;max-width:250px;padding:9px 13px;font-size:11px;line-height:1.6;
+    color:#d8b07a;border-style:dashed;border-color:rgba(240,160,75,.4);border-radius:9px;background:rgba(20,14,6,.5)}
+  .assume b{display:block;font-size:10px;letter-spacing:.2em;color:var(--amber);margin-bottom:3px;font-weight:600}
+  .panel{position:absolute;left:24px;bottom:46px;min-width:300px;max-width:360px;padding:14px 16px;
+    background:var(--panel);border:1px solid var(--line);border-radius:12px;backdrop-filter:blur(10px);pointer-events:auto}
+  .row{display:flex;align-items:center;gap:10px;margin:7px 0;font-size:12px}
+  .row label{flex:0 0 96px;color:#cfc8ba}
+  .row input[type=range]{flex:1;accent-color:var(--amber);height:3px;cursor:pointer}
+  .row .val{flex:0 0 62px;text-align:right;color:var(--amber-hi);font-variant-numeric:tabular-nums;font-size:12px}
+  .btns{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+  button.act{appearance:none;cursor:pointer;font-size:12px;letter-spacing:.08em;padding:7px 14px;border-radius:8px;
+    color:var(--amber-hi);background:rgba(240,160,75,.10);border:1px solid rgba(240,160,75,.45);transition:background .2s}
+  button.act:hover{background:rgba(240,160,75,.24)}
+  button.act.on{background:rgba(240,160,75,.32);color:#fff2df}
+  .readout{margin-top:10px;padding-top:9px;border-top:1px solid rgba(255,255,255,.08);
+    font-size:12px;line-height:1.9;color:#bfb7a8}
+  .readout b{color:var(--amber-hi);font-weight:600;font-variant-numeric:tabular-nums}
+  .hint{margin-top:7px;font-size:11px;color:var(--dim)}
+  footer{position:fixed;bottom:10px;left:0;right:0;z-index:10;text-align:center;pointer-events:none;
+    font-size:11px;letter-spacing:.08em;color:#6f685c}
+</style>
+</head>
+<body>
+<div id="stage"></div>
+<div id="vignette"></div>
+<nav>
+  <div class="logo">MOMO <em>Universe</em> Model</div>
+  <div class="tabs">
+    <button class="tab active" data-id="s1">三体</button>
+    <button class="tab" data-id="s2">黑洞</button>
+    <button class="tab" data-id="s3">费米悖论</button>
+    <button class="tab" data-id="s4">洛希极限</button>
+    <button class="tab" data-id="s5">引力弹弓</button>
+  </div>
+</nav>
+
+<!-- S1 三体 -->
+<div class="scene-ui active" id="ui-s1">
+  <div class="card info">
+    <h1>三体问题<span>THREE-BODY CHAOS</span></h1>
+    <p>三颗等质量恒星只凭万有引力互相纠缠。方程没有通解，初始速度 1% 的扰动，就足以让命运完全分岔。试着调大 ε，观察「8 字形」周期解如何崩解为混沌。</p>
+  </div>
+  <div class="card assume"><b>假设与边界</b>真实牛顿动力学数值积分（RK4）· 点质量近似 · G=1 归一化单位</div>
+  <div class="panel">
+    <div class="row"><label>初值扰动 ε</label><input type="range" id="s1-eps" min="0" max="1" step="0.01" value="0"><span class="val" id="s1-epsv">0.00%</span></div>
+    <div class="btns">
+      <button class="act on" id="s1-p8">8字形周期解</button>
+      <button class="act" id="s1-chaos">混沌三星</button>
+      <button class="act" id="s1-reset">重置</button>
+      <button class="act" id="s1-pause">暂停</button>
+    </div>
+    <div class="readout">运行圈数 <b id="s1-orbits">0.00</b> · 最小间距 <b id="s1-mindist">—</b> · 模拟时标 <b id="s1-time">0.0</b></div>
+    <div class="hint">拖动旋转视角 · 滚轮缩放 · ε 在下次重置时生效</div>
+  </div>
+</div>
+
+<!-- S2 黑洞 -->
+<div class="scene-ui" id="ui-s2">
+  <div class="card info">
+    <h1>黑洞 · 引力透镜<span>BLACK HOLE LENSING</span></h1>
+    <p>光在强引力场中弯折：吸积盘的背面被「抬」到黑洞上方，一侧因多普勒效应更亮，最内圈是光子环——光绕黑洞一圈半后逃逸的残影。拖动画面，换一个倾角凝视它。</p>
+  </div>
+  <div class="card assume"><b>假设与边界</b>示意渲染（屏幕空间近似），非广义相对论数值模拟<span id="s2-quality" style="display:block;margin-top:5px;font-size:10px;color:#9a917f">画质：自动(96步·100%)</span></div>
+  <div class="panel">
+    <div class="row"><label>吸积盘亮度</label><input type="range" id="s2-bright" min="0" max="2" step="0.01" value="1"><span class="val" id="s2-brightv">1.00</span></div>
+    <div class="row"><label>吸积盘转速</label><input type="range" id="s2-spin" min="0" max="3" step="0.01" value="1"><span class="val" id="s2-spinv">1.00</span></div>
+    <div class="hint">拖动画面：改变观察方位与倾角 · 滚轮：拉近 / 拉远</div>
+  </div>
+</div>
+
+<!-- S3 费米悖论 -->
+<div class="scene-ui" id="ui-s3">
+  <div class="card info">
+    <h1>费米悖论 · 大沉默<span>THE GREAT SILENCE</span></h1>
+    <p>银河有两万颗被采样的恒星。如果文明以某个速率诞生、平均存活一段岁月、只有一段时间可被探测——按下「运行推演」，看银河是繁星点点，还是死寂如常。青色脉冲是「我们」。</p>
+  </div>
+  <div class="card assume"><b>假设与边界</b>假设推演的后果（德雷克式蒙特卡洛），非外星人存在概率 · 恒星为示意采样</div>
+  <div class="panel">
+    <div class="row"><label>恒星数（固定）</label><span class="val" style="flex:1;text-align:left;color:#cfc8ba">20,000</span></div>
+    <div class="row"><label>文明产生率 λ</label><input type="range" id="s3-lam" min="0" max="1" step="0.005" value="0.26"><span class="val" id="s3-lamv">—</span></div>
+    <div class="row"><label>文明平均寿命 L</label><input type="range" id="s3-life" min="0" max="1" step="0.005" value="0.28"><span class="val" id="s3-lifev">—</span></div>
+    <div class="row"><label>可探测窗口 W</label><input type="range" id="s3-win" min="0" max="1" step="0.005" value="0.35"><span class="val" id="s3-winv">—</span></div>
+    <div class="btns">
+      <button class="act" id="s3-run">运行推演</button>
+      <button class="act" id="s3-reset">重置</button>
+    </div>
+    <div class="readout">推演时标 <b id="s3-myr">0</b> Myr · 存活文明 <b id="s3-alive">0</b> · 可探测 <b id="s3-det">0</b><br>距我们最近的可探测文明：<b id="s3-near">—</b></div>
+    <div class="hint">λ 单位：次 / 恒星 / Myr · L、W 单位：Myr（百万年）· 文明样本上限 4000</div>
+  </div>
+</div>
+
+<!-- S4 洛希极限 -->
+<div class="scene-ui" id="ui-s4">
+  <div class="card info">
+    <h1>洛希极限 · 潮汐瓦解<span>ROCHE LIMIT</span></h1>
+    <p>当卫星靠得太近，行星引力在它两侧的力度差，会超过它自身的凝聚力。红色虚线是刚体洛希极限——把轨道半径推过那条线，看卫星被拉伸、撕裂，散作一弯碎屑弧。</p>
+  </div>
+  <div class="card assume"><b>假设与边界</b>经典洛希近似 + 破碎为示意粒子，非材料力学仿真</div>
+  <div class="panel">
+    <div class="row"><label>轨道半径</label><input type="range" id="s4-orbit" min="1.2" max="5" step="0.01" value="4.6"><span class="val" id="s4-orbitv">4.60</span></div>
+    <div class="row"><label>密度比 ρ行/ρ卫</label><input type="range" id="s4-rho" min="0.2" max="5" step="0.01" value="1.6"><span class="val" id="s4-rhov">1.60</span></div>
+    <div class="btns">
+      <button class="act" id="s4-reset">重置卫星</button>
+    </div>
+    <div class="readout">当前距离 <b id="s4-dist">—</b> · 洛希极限 d <b id="s4-roche">—</b><br>状态：<b id="s4-status">安全轨道</b></div>
+    <div class="hint">d ≈ 2.44 · R · (ρ行/ρ卫)^(1/3) · 行星半径 R = 1</div>
+  </div>
+</div>
+
+<!-- S5 引力弹弓 -->
+<div class="scene-ui" id="ui-s5">
+  <div class="card info">
+    <h1>引力弹弓 · 借力飞行<span>GRAVITY ASSIST</span></h1>
+    <p>航天器不烧一滴燃料，只从行星身后「借」一点轨道动能。从左侧入射，调好瞄准距离：擦过行星背后会被甩得更快，撞上行星则前功尽弃。观察速度矢量与 Δv。</p>
+  </div>
+  <div class="card assume"><b>假设与边界</b>真实限制性三体积分（RK4）· 参考系：恒星系 · 航天器为无质量测试粒子</div>
+  <div class="panel">
+    <div class="row"><label>瞄准距离 b</label><input type="range" id="s5-b" min="-2" max="2" step="0.05" value="0.9"><span class="val" id="s5-bv">0.90</span></div>
+    <div class="row"><label>入射速度 v∞</label><input type="range" id="s5-v" min="6" max="10" step="0.1" value="8"><span class="val" id="s5-vv">8.0</span></div>
+    <div class="btns">
+      <button class="act" id="s5-launch">发射</button>
+      <button class="act" id="s5-reset">重置</button>
+    </div>
+    <div class="readout">v入射 <b id="s5-vin">—</b> · v当前 <b id="s5-vnow">—</b> · Δv <b id="s5-dv">—</b><br>状态：<b id="s5-status">待命 — 调准 b，然后发射</b></div>
+    <div class="hint">琥珀色箭头 = 航天器速度矢量 · 青色箭头 = 行星速度矢量</div>
+  </div>
+</div>
+
+<footer>MOMO Universe Model — 把关于宇宙的好问题，变成可以亲手运行的实验</footer>
+
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+    "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+  }
+}
+</script>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
+
+/* ================= 渲染基座 ================= */
+const stage = document.getElementById('stage');
+const renderer = new THREE.WebGLRenderer({ antialias:true, powerPreference:'high-performance' });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.setClearColor(0x05060a, 1);
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.05;
+stage.appendChild(renderer.domElement);
+
+const composer = new EffectComposer(renderer);
+composer.setPixelRatio(Math.min(devicePixelRatio, 2));
+const renderPass = new RenderPass(new THREE.Scene(), new THREE.PerspectiveCamera());
+composer.addPass(renderPass);
+const bloomPass = new UnrealBloomPass(new THREE.Vector2(innerWidth, innerHeight), 0.9, 0.6, 0.1);
+composer.addPass(bloomPass);
+composer.addPass(new OutputPass());
+
+/* ================= 工具 ================= */
+const $ = id => document.getElementById(id);
+function randn(){ // 标准正态（Box-Muller）
+  let u = 0; while (u === 0) u = Math.random();
+  return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * Math.random());
+}
+function discTexture(){
+  const c = document.createElement('canvas'); c.width = c.height = 64;
+  const g = c.getContext('2d');
+  const gr = g.createRadialGradient(32, 32, 0, 32, 32, 32);
+  gr.addColorStop(0, 'rgba(255,255,255,1)');
+  gr.addColorStop(0.35, 'rgba(255,255,255,.65)');
+  gr.addColorStop(1, 'rgba(255,255,255,0)');
+  g.fillStyle = gr; g.fillRect(0, 0, 64, 64);
+  return new THREE.CanvasTexture(c);
+}
+const DISC = discTexture();
+function makeGlow(color, scale, opacity){
+  const m = new THREE.SpriteMaterial({ map:DISC, color, transparent:true,
+    opacity: opacity ?? 0.85, blending:THREE.AdditiveBlending, depthWrite:false });
+  const s = new THREE.Sprite(m); s.scale.setScalar(scale); return s;
+}
+function makeStarfield(n = 2600, r = 200){
+  const pos = new Float32Array(n * 3), col = new Float32Array(n * 3);
+  const c = new THREE.Color();
+  for (let i = 0; i < n; i++){
+    let x, y, z, l;
+    do { x = Math.random()*2-1; y = Math.random()*2-1; z = Math.random()*2-1; l = x*x+y*y+z*z; } while (l > 1 || l < 1e-4);
+    l = Math.sqrt(l);
+    const rr = r * (0.55 + 0.45 * Math.random());
+    pos[i*3] = x/l*rr; pos[i*3+1] = y/l*rr; pos[i*3+2] = z/l*rr;
+    if (Math.random() < 0.72) c.setHSL(0.08 + Math.random()*0.05, 0.5, 0.55 + Math.random()*0.35);
+    else c.setHSL(0.55, 0.35, 0.6 + Math.random()*0.3);
+    col[i*3] = c.r; col[i*3+1] = c.g; col[i*3+2] = c.b;
+  }
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+  g.setAttribute('color', new THREE.BufferAttribute(col, 3));
+  const m = new THREE.PointsMaterial({ size:1.6, sizeAttenuation:false, map:DISC, vertexColors:true,
+    transparent:true, opacity:0.9, depthWrite:false });
+  const p = new THREE.Points(g, m); p.frustumCulled = false; return p;
+}
+// 渐隐拖尾（RGBA 顶点色，加色混合）
+function makeTrail(n, colorHex){
+  const pos = new Float32Array(n * 3), col = new Float32Array(n * 4);
+  const base = new THREE.Color(colorHex);
+  for (let i = 0; i < n; i++){
+    const f = Math.pow(i / (n - 1), 2.2) * 0.9;
+    col[i*4] = base.r * f; col[i*4+1] = base.g * f; col[i*4+2] = base.b * f; col[i*4+3] = 1;
+  }
+  const g = new THREE.BufferGeometry();
+  const pa = new THREE.BufferAttribute(pos, 3); pa.setUsage(THREE.DynamicDrawUsage);
+  g.setAttribute('position', pa);
+  g.setAttribute('color', new THREE.BufferAttribute(col, 4));
+  const m = new THREE.LineBasicMaterial({ vertexColors:true, transparent:true,
+    blending:THREE.AdditiveBlending, depthWrite:false });
+  const line = new THREE.Line(g, m);
+  line.frustumCulled = false;
+  g.setDrawRange(0, 0);
+  return {
+    line, count: 0,
+    push(p){
+      pos.copyWithin(0, 3);
+      pos[(n-1)*3] = p.x; pos[(n-1)*3+1] = p.y; pos[(n-1)*3+2] = p.z;
+      this.count = Math.min(this.count + 1, n);
+      g.setDrawRange(n - this.count, this.count);
+      pa.needsUpdate = true;
+    },
+    reset(){ this.count = 0; g.setDrawRange(0, 0); }
+  };
+}
+function bindRange(id, vid, fmt, onChange){
+  const el = $(id), vv = $(vid);
+  const show = () => { vv.textContent = fmt(parseFloat(el.value)); };
+  el.addEventListener('input', () => { show(); if (onChange) onChange(parseFloat(el.value)); });
+  show();
+  return el;
+}
+
+/* ================= 场景管理 ================= */
+const scenes = {};
+let activeId = 's1';
+function switchTo(id){
+  if (!scenes[id] || activeId === id) return;
+  const prev = scenes[activeId];
+  if (prev && prev.deactivate) prev.deactivate();
+  activeId = id;
+  const s = scenes[id];
+  renderPass.scene = s.scene;
+  renderPass.camera = s.camera;
+  bloomPass.strength = s.bloomStrength ?? 0.9;
+  bloomPass.threshold = s.bloomThreshold ?? 0.1; // 默认值与构造参数一致，其他场景行为不变
+  for (const k in scenes) if (scenes[k].controls) scenes[k].controls.enabled = (k === id);
+  document.querySelectorAll('.scene-ui').forEach(e => e.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(e => e.classList.toggle('active', e.dataset.id === id));
+  $('ui-' + id).classList.add('active');
+  if (s.activate) s.activate();
+}
+document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () => switchTo(t.dataset.id)));
+
+/* ================= S1 三体（RK4 真实积分） ================= */
+scenes.s1 = (() => {
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(50, innerWidth/innerHeight, 0.1, 1000);
+  camera.position.set(0, 0, 5.4);
+  const controls = new OrbitControls(camera, renderer.domElement);
+  controls.enableDamping = true; controls.dampingFactor = 0.06;
+  scene.add(makeStarfield());
+  const ambient = new THREE.AmbientLight(0x334, 0.6); scene.add(ambient);
+
+  const G = 1, masses = [1, 1, 1];
+  const bodyColors = [0xffc46b, 0xff8a3d, 0x7fd8ff];
+  const meshes = [], trails = [];
+  for (let i = 0; i < 3; i++){
+    const m = new THREE.Mesh(new THREE.SphereGeometry(0.065, 24, 24),
+      new THREE.MeshBasicMaterial({ color: bodyColors[i] }));
+    m.add(makeGlow(bodyColors[i], 0.75));
+    scene.add(m); meshes.push(m);
+    const t = makeTrail(1200, bodyColors[i]); trails.push(t); scene.add(t.line);
+  }
+
+  // state: [x1,y1,x2,y2,x3,y3, vx1,vy1,vx2,vy2,vx3,vy3]
+  const state = new Float64Array(12);
+  const k1 = new Float64Array(12), k2 = new Float64Array(12),
+        k3 = new Float64Array(12), k4 = new Float64Array(12),
+        acc = new Float64Array(12), tmp = new Float64Array(12);
+  function deriv(s, out){
+    for (let i = 0; i < 3; i++){
+      let ax = 0, ay = 0;
+      const xi = s[i*2], yi = s[i*2+1];
+      for (let j = 0; j < 3; j++){
+        if (j === i) continue;
+        const dx = s[j*2] - xi, dy = s[j*2+1] - yi;
+        const r2 = dx*dx + dy*dy + 1e-6;
+        const inv = G * masses[j] / (r2 * Math.sqrt(r2));
+        ax += dx * inv; ay += dy * inv;
+      }
+      out[i*2] = s[6 + i*2]; out[i*2+1] = s[6 + i*2+1];
+      out[6 + i*2] = ax; out[6 + i*2+1] = ay;
+    }
+  }
+  function rk4(dt){
+    deriv(state, acc); k1.set(acc);
+    for (let i = 0; i < 12; i++) tmp[i] = state[i] + 0.5 * dt * k1[i];
+    deriv(tmp, acc); k2.set(acc);
+    for (let i = 0; i < 12; i++) tmp[i] = state[i] + 0.5 * dt * k2[i];
+    deriv(tmp, acc); k3.set(acc);
+    for (let i = 0; i < 12; i++) tmp[i] = state[i] + dt * k3[i];
+    deriv(tmp, acc); k4.set(acc);
+    for (let i = 0; i < 12; i++) state[i] += dt / 6 * (k1[i] + 2*k2[i] + 2*k3[i] + k4[i]);
+  }
+
+  const P8 = [0.97000436, -0.24308753, -0.97000436, 0.24308753, 0, 0,
+              0.466203685, 0.43236573, 0.466203685, 0.43236573, -0.93240737, -0.86473146];
+  const CHAOS = [1.0, 0.0, -0.5, 0.8660254, -0.5, -0.8660254,
+                 0.10, 1.05, -0.90, -0.35, 0.55, -0.75];
+  let preset = P8, paused = false, simT = 0, orbits = 0, lastAng = null;
+
+  function reset(){
+    const eps = parseFloat($('s1-eps').value) / 100;
+    state.set(preset);
+    state[6] *= (1 + eps); state[7] *= (1 + eps);
+    trails.forEach(t => t.reset());
+    simT = 0; orbits = 0; lastAng = null; paused = false;
+    $('s1-pause').textContent = '暂停';
+    $('s1-pause').classList.remove('on');
+  }
+  $('s1-reset').addEventListener('click', reset);
+  $('s1-pause').addEventListener('click', function(){
+    paused = !paused;
+    this.textContent = paused ? '继续' : '暂停';
+    this.classList.toggle('on', paused);
+  });
+  $('s1-p8').addEventListener('click', () => { preset = P8;
+    $('s1-p8').classList.add('on'); $('s1-chaos').classList.remove('on'); reset(); });
+  $('s1-chaos').addEventListener('click', () => { preset = CHAOS;
+    $('s1-chaos').classList.add('on'); $('s1-p8').classList.remove('on'); reset(); });
+  bindRange('s1-eps', 's1-epsv', v => v.toFixed(2) + '%');
+  reset();
+
+  let frame = 0;
+  function update(dt){
+    if (!paused){
+      for (let k = 0; k < 12; k++) rk4(0.0018);
+      simT += 0.0018 * 12;
+      // 圈数：体1 绕质心的累计转角
+      const ang = Math.atan2(state[1], state[0]);
+      if (lastAng !== null){
+        let d = ang - lastAng;
+        if (d > Math.PI) d -= 2 * Math.PI;
+        if (d < -Math.PI) d += 2 * Math.PI;
+        orbits += d / (2 * Math.PI);
+      }
+      lastAng = ang;
+    }
+    for (let i = 0; i < 3; i++){
+      meshes[i].position.set(state[i*2], state[i*2+1], 0);
+      if (!paused || frame === 0) trails[i].push(meshes[i].position);
+    }
+    if (frame++ % 8 === 0){
+      let md = 1e9;
+      for (let i = 0; i < 3; i++) for (let j = i + 1; j < 3; j++){
+        const dx = state[i*2] - state[j*2], dy = state[i*2+1] - state[j*2+1];
+        md = Math.min(md, Math.hypot(dx, dy));
+      }
+      $('s1-orbits').textContent = Math.abs(orbits).toFixed(2);
+      $('s1-mindist').textContent = md.toFixed(3);
+      $('s1-time').textContent = simT.toFixed(1);
+    }
+    controls.update();
+  }
+  return { scene, camera, controls, update, bloomStrength: 1.05 };
+})();
+
+/* ================= S2 黑洞（全屏 fragment shader） ================= */
+scenes.s2 = (() => {
+  const FRAG = `
+precision highp float;
+uniform float uTime;
+uniform vec2 uRes;
+uniform float uTilt;
+uniform float uAzi;
+uniform float uDist;
+uniform float uBright;
+uniform float uSpin;
+uniform int uSteps;
+
+float hash21(vec2 p){
+  p = fract(p * vec2(123.34, 456.21));
+  p += dot(p, p + 45.32);
+  return fract(p.x * p.y);
+}
+float noise2(vec2 p){
+  vec2 i = floor(p); vec2 f = fract(p);
+  f = f * f * (3.0 - 2.0 * f);
+  float a = hash21(i);
+  float b = hash21(i + vec2(1.0, 0.0));
+  float c = hash21(i + vec2(0.0, 1.0));
+  float d = hash21(i + vec2(1.0, 1.0));
+  return mix(mix(a, b, f.x), mix(c, d, f.x), f.y);
+}
+float fbm(vec2 p){
+  float v = 0.0; float a = 0.5;
+  for (int k = 0; k < 4; k++){ v += a * noise2(p); p = p * 2.03 + vec2(13.7, 7.1); a *= 0.5; }
+  return v;
+}
+vec3 starField(vec3 d){
+  vec3 col = vec3(0.0);
+  vec3 g = d * 38.0;
+  vec3 id = floor(g); vec3 f = fract(g) - 0.5;
+  float h = hash21(id.xy * 1.7 + id.z * 3.1);
+  if (h > 0.978){
+    float s = (1.0 - smoothstep(0.0, 0.34, length(f))) * ((h - 0.978) / 0.022);
+    col += vec3(1.0, 0.92, 0.78) * s * 0.8;
+  }
+  g = d * 85.0 + 11.0; id = floor(g); f = fract(g) - 0.5;
+  h = hash21(id.xy * 2.3 + id.z * 1.3);
+  if (h > 0.972){
+    float s = (1.0 - smoothstep(0.0, 0.5, length(f))) * ((h - 0.972) / 0.028);
+    col += mix(vec3(0.75, 0.85, 1.0), vec3(1.0, 0.85, 0.65), fract(h * 57.0)) * s * 0.75;
+  }
+  float n1 = fbm(d.xy * 3.0 + d.z * 1.7);
+  float n2 = fbm(d.yz * 2.5 + d.x * 1.3);
+  col += vec3(0.10, 0.055, 0.028) * n1 + vec3(0.015, 0.045, 0.065) * n2;
+  return col;
+}
+void main(){
+  vec2 uv = (gl_FragCoord.xy * 2.0 - uRes) / min(uRes.x, uRes.y);
+  float ct = cos(uTilt); float st = sin(uTilt);
+  float ca = cos(uAzi); float sa = sin(uAzi);
+  vec3 ro = vec3(sa * ct, st, -ca * ct) * uDist;
+  vec3 fw = normalize(-ro);
+  vec3 rt = normalize(cross(fw, vec3(0.0, 1.0, 0.0)));
+  vec3 up = cross(rt, fw);
+  vec3 rd = normalize(fw + 1.15 * (uv.x * rt + uv.y * up));
+  vec3 p = ro;
+  vec3 pp = ro;
+  vec3 disk = vec3(0.0);
+  float minr = 1000.0;
+  float captured = 0.0;
+  float dt = 0.1 * (96.0 / float(uSteps)); // 步数降低时保持总光程一致
+  for (int i = 0; i < 96; i++){ // 常量上界（WebGL1 附录A 兼容），实际步数由 uniform 控制
+    if (i >= uSteps) break;
+    pp = p;
+    float r = length(p);
+    if (r < 1.0){ captured = 1.0; break; }
+    if (r > uDist + 20.0){ break; }
+    vec3 acc = -p * (1.35 / (r * r * r));
+    rd = normalize(rd + acc * dt);
+    p += rd * dt;
+    // 线段最近距离判定：防止大步长直接跨过视界而不触发捕获
+    vec3 seg = p - pp;
+    float tCap = clamp(-dot(pp, seg) / max(dot(seg, seg), 1e-8), 0.0, 1.0);
+    float rSeg = length(pp + seg * tCap);
+    if (rSeg < 1.0){ captured = 1.0; minr = min(minr, rSeg); break; }
+    if (r < minr){ minr = r; }
+    // 吸积盘：穿过 y=0 平面时采样（含被弯折到黑洞上/下方的盘背面）
+    if (pp.y * p.y < 0.0){
+      float t = pp.y / (pp.y - p.y);
+      vec3 hp = mix(pp, p, t);
+      float rr = length(hp.xz);
+      if (rr > 1.7 && rr < 6.5){
+        float edge = smoothstep(1.7, 2.35, rr) * (1.0 - smoothstep(4.9, 6.5, rr));
+        float ang = atan(hp.z, hp.x);
+        // 无缝环带噪声（cos/sin 嵌入避免 ±π 接缝）+ 差动自转（内快外慢）
+        float phi = uTime * uSpin * 1.5 / (0.35 * rr);
+        float cp = cos(phi), sp = sin(phi);
+        vec2 pol = vec2(cos(ang), sin(ang));
+        vec2 rp2 = vec2(cp * pol.x - sp * pol.y, sp * pol.x + cp * pol.y);
+        float tex = fbm(rp2 * 6.0 + vec2(rr * 1.15, rr * 0.3));
+        tex = 0.22 + 1.05 * tex;
+        float heat = 1.0 - (rr - 1.7) / 4.8;
+        vec3 dcol = mix(vec3(0.92, 0.20, 0.028), vec3(1.0, 0.97, 0.86), pow(heat, 2.2));
+        vec3 vel = normalize(vec3(-hp.z, 0.0, hp.x));
+        float dop = clamp(dot(vel, normalize(ro - hp)), -1.0, 1.0);
+        float boost = 0.38 + 2.4 * pow(0.5 + 0.5 * dop, 3.2); // 多普勒聚束：一侧明显更亮
+        disk += dcol * (edge * tex * 0.55) * boost * uBright * (0.27 + 1.20 * heat);
+      }
+    }
+  }
+  vec3 col;
+  if (captured > 0.5 || minr < 1.02){
+    col = vec3(0.0); // 事件视界阴影：进入捕获半径的光不返回，纯黑
+  } else {
+    // 盘亮度高光压缩：多次穿盘累积不再过曝（保持色相）
+    float dl = dot(disk, vec3(0.30, 0.59, 0.11));
+    disk *= 1.0 / (1.0 + 0.30 * dl);
+    col = disk;
+    // 光子环：贴在阴影边缘外侧的细亮环（避免对负底数调用 pow，GLSL 中行为未定义）
+    float q1 = (minr - 1.32) * 9.0;
+    col += vec3(1.0, 0.88, 0.66) * exp(-q1 * q1) * (0.55 + 0.45 * uBright);
+    // 内侧软辉光（有界，不再随 1/minr^3 发散）
+    float q2 = (minr - 1.12) * 6.0;
+    col += vec3(1.0, 0.62, 0.28) * exp(-q2 * q2) * 0.16;
+    // 星空被盘遮挡：盘越亮，透出的星越少（避免盘面上撒满白点）
+    col += starField(rd) * (1.0 - clamp(dl * 0.85, 0.0, 0.92));
+  }
+  col = min(col, vec3(5.0)); // HDR 上限保险
+  gl_FragColor = vec4(col, 1.0);
+}`;
+  const scene = new THREE.Scene();
+  const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+  const uniforms = {
+    uTime: { value: 0 }, uRes: { value: new THREE.Vector2(1, 1) },
+    uTilt: { value: 0.45 }, uAzi: { value: 0.6 }, uDist: { value: 8.0 },
+    uBright: { value: 1.0 }, uSpin: { value: 1.0 }, uSteps: { value: 96 }
+  };
+  const mat = new THREE.ShaderMaterial({
+    uniforms,
+    vertexShader: 'void main(){ gl_Position = vec4(position.xy, 0.0, 1.0); }',
+    fragmentShader: FRAG, depthTest: false, depthWrite: false
+  });
+  const quad = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), mat);
+  quad.frustumCulled = false;
+  scene.add(quad);
+
+  let s2active = false, dragging = false, lx = 0, ly = 0;
+  const el = renderer.domElement;
+  el.addEventListener('pointerdown', e => {
+    if (!s2active) return;
+    dragging = true; lx = e.clientX; ly = e.clientY;
+  });
+  window.addEventListener('pointermove', e => {
+    if (!dragging) return;
+    const dx = e.clientX - lx, dy = e.clientY - ly;
+    lx = e.clientX; ly = e.clientY;
+    uniforms.uAzi.value += dx * 0.005;
+    uniforms.uTilt.value = Math.min(1.45, Math.max(0.12, uniforms.uTilt.value + dy * 0.004));
+  });
+  window.addEventListener('pointerup', () => { dragging = false; });
+  el.addEventListener('wheel', e => {
+    if (!s2active) return;
+    e.preventDefault();
+    uniforms.uDist.value = Math.min(10, Math.max(3.5, uniforms.uDist.value + e.deltaY * 0.006));
+  }, { passive: false });
+
+  bindRange('s2-bright', 's2-brightv', v => v.toFixed(2), v => { uniforms.uBright.value = v; });
+  bindRange('s2-spin', 's2-spinv', v => v.toFixed(2), v => { uniforms.uSpin.value = v; });
+
+  /* ---- 性能自适应降级：步数档位 + 渲染分辨率（仅作用于 S2） ---- */
+  const TIERS = [
+    { steps: 96, scale: 1.0 },
+    { steps: 56, scale: 0.75 },
+    { steps: 32, scale: 0.6 }
+  ];
+  let tier = 0, lastW = innerWidth, lastH = innerHeight;
+  // ?lowq=1：以最低画质启动（弱 GPU/软件渲染环境的保底入口）
+  if (/[?&]lowq=1/.test(location.search)) tier = TIERS.length - 1;
+  let probeT = 0, probeSum = 0, probeN = 0, probeSkip = 0;
+
+  function setRes(){
+    const s = renderer.getDrawingBufferSize(new THREE.Vector2());
+    uniforms.uRes.value.set(s.x * TIERS[tier].scale, s.y * TIERS[tier].scale);
+  }
+  function applyTier(){
+    uniforms.uSteps.value = TIERS[tier].steps;
+    composer.setSize(lastW * TIERS[tier].scale, lastH * TIERS[tier].scale);
+    setRes();
+    const q = document.getElementById('s2-quality');
+    if (q) q.textContent = '画质：自动(' + TIERS[tier].steps + '步·' + Math.round(TIERS[tier].scale * 100) + '%)';
+  }
+  // FPS 探针：仅在 S2 激活时由主循环喂入帧时长（ms），每 2 秒评估一次
+  function probe(ms){
+    if (!s2active) return;
+    if (probeSkip > 0){ probeSkip--; return; } // 跳过激活后最初几帧（含 shader 编译卡顿）
+    probeT += ms; probeSum += ms; probeN++;
+    if (probeT < 2000) return;
+    const avg = probeSum / probeN;
+    probeT = 0; probeSum = 0; probeN = 0;
+    if (avg > 40 && tier === 0){ tier = 1; applyTier(); }
+    else if (avg > 50 && tier === 1){ tier = 2; applyTier(); }
+    else if (avg < 18 && tier > 0){ tier--; applyTier(); }
+  }
+  function startProbe(){ probeT = 0; probeSum = 0; probeN = 0; probeSkip = 3; }
+
+  function update(dt, t){ uniforms.uTime.value = t; }
+  return {
+    scene, camera, update, probe, bloomStrength: 0.55, bloomThreshold: 0.62,
+    activate(){ s2active = true; applyTier(); startProbe(); },
+    deactivate(){ s2active = false; dragging = false; composer.setSize(lastW, lastH); },
+    resize(w, h){ lastW = w; lastH = h; if (s2active) applyTier(); }
+  };
+})();
+
+/* ================= S3 费米悖论（蒙特卡洛） ================= */
+scenes.s3 = (() => {
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(55, innerWidth/innerHeight, 0.1, 2000);
+  camera.position.set(0, 52, 68);
+  const controls = new OrbitControls(camera, renderer.domElement);
+  controls.enableDamping = true; controls.dampingFactor = 0.06;
+  scene.add(makeStarfield(1800, 500));
+
+  const galaxy = new THREE.Group(); scene.add(galaxy);
+  const NST = 20000, GALR = 50, ARMS = 3;
+  const gpos = new Float32Array(NST * 3), gcol = new Float32Array(NST * 3);
+  const c = new THREE.Color();
+  for (let i = 0; i < NST; i++){
+    let x, y, z;
+    if (i < NST * 0.18){ // 中心核球
+      const r = Math.abs(randn()) * 4.2 + 0.2;
+      const th = Math.random() * Math.PI * 2, ph = Math.acos(2 * Math.random() - 1);
+      x = r * Math.sin(ph) * Math.cos(th); y = r * Math.cos(ph) * 0.55; z = r * Math.sin(ph) * Math.sin(th);
+      c.setHSL(0.09, 0.5, 0.72 + Math.random() * 0.22);
+    } else { // 对数螺线旋臂
+      const arm = i % ARMS;
+      const r = 3.5 + Math.pow(Math.random(), 0.65) * (GALR - 3.5);
+      const th = arm * (Math.PI * 2 / ARMS) + Math.log(r / 3.5) * 1.12 + randn() * 0.2 * (0.6 + r / GALR);
+      x = r * Math.cos(th); z = r * Math.sin(th);
+      y = randn() * 0.9 * (1.15 - r / GALR);
+      const t = r / GALR;
+      if (Math.random() < 0.12) c.setHSL(0.52, 0.55, 0.6);
+      else c.setHSL(0.08 + Math.random() * 0.04, 0.55, 0.64 - 0.24 * t + Math.random() * 0.1);
+    }
+    gpos[i*3] = x; gpos[i*3+1] = y; gpos[i*3+2] = z;
+    gcol[i*3] = c.r; gcol[i*3+1] = c.g; gcol[i*3+2] = c.b;
+  }
+  const gg = new THREE.BufferGeometry();
+  gg.setAttribute('position', new THREE.BufferAttribute(gpos, 3));
+  gg.setAttribute('color', new THREE.BufferAttribute(gcol, 3));
+  galaxy.add(new THREE.Points(gg, new THREE.PointsMaterial({ size:0.34, map:DISC, vertexColors:true,
+    transparent:true, opacity:0.95, blending:THREE.AdditiveBlending, depthWrite:false })));
+  galaxy.add(makeGlow(0xffc07a, 14, 0.5)); // 中心亮晕
+
+  // “我们”
+  const usAngle = 2.3, usR = 26;
+  const us = makeGlow(0x6fe0ff, 3.0, 0.95);
+  us.position.set(usR * Math.cos(usAngle), 0, usR * Math.sin(usAngle));
+  galaxy.add(us);
+
+  // 文明点层
+  const MAXC = 4000;
+  const civPos = new Float32Array(MAXC * 3), civCol = new Float32Array(MAXC * 3);
+  const cg = new THREE.BufferGeometry();
+  const cpa = new THREE.BufferAttribute(civPos, 3); cpa.setUsage(THREE.DynamicDrawUsage);
+  const cca = new THREE.BufferAttribute(civCol, 3); cca.setUsage(THREE.DynamicDrawUsage);
+  cg.setAttribute('position', cpa); cg.setAttribute('color', cca);
+  cg.setDrawRange(0, 0);
+  const civPts = new THREE.Points(cg, new THREE.PointsMaterial({ size:0.85, map:DISC, vertexColors:true,
+    transparent:true, blending:THREE.AdditiveBlending, depthWrite:false }));
+  civPts.frustumCulled = false;
+  galaxy.add(civPts);
+
+  // 参数映射
+  let lam = 1e-5, LIFE = 22, WIN = 88;
+  bindRange('s3-lam', 's3-lamv', v => ('10^' + (-6 + v * 3.8).toFixed(1)), v => { lam = Math.pow(10, -6 + v * 3.8); });
+  bindRange('s3-life', 's3-lifev', v => Math.round(Math.pow(10, 0.3 + v * 3.7)) + ' Myr', v => { LIFE = Math.pow(10, 0.3 + v * 3.7); });
+  bindRange('s3-win', 's3-winv', v => Math.round(Math.pow(10, 1 + v * 2.7)) + ' Myr', v => { WIN = Math.pow(10, 1 + v * 2.7); });
+
+  let civs = [], running = false, simMyr = 0;
+  const SPEED = 250; // Myr / 秒
+  $('s3-run').addEventListener('click', function(){
+    running = !running;
+    this.textContent = running ? '暂停推演' : '运行推演';
+    this.classList.toggle('on', running);
+  });
+  $('s3-reset').addEventListener('click', () => { civs = []; simMyr = 0; });
+
+  let frame = 0;
+  function update(dt, t){
+    controls.update();
+    galaxy.rotation.y += dt * 0.02;
+    us.material.opacity = 0.6 + 0.35 * Math.sin(t * 3.0);
+    if (running){
+      const dM = SPEED * dt;
+      simMyr += dM;
+      let births = lam * NST * dM;
+      let nb = Math.floor(births);
+      if (Math.random() < births - nb) nb++;
+      for (let k = 0; k < nb && civs.length < MAXC; k++){
+        civs.push({ i: (Math.random() * NST) | 0, born: simMyr,
+          life: LIFE * (0.5 + Math.random()), det: WIN * (0.6 + 0.8 * Math.random()) });
+      }
+      if (frame % 7 === 0) civs = civs.filter(cv => simMyr - cv.born < cv.life);
+    }
+    const n = Math.min(civs.length, MAXC);
+    let alive = 0, det = 0, nearest = 1e9;
+    for (let k = 0; k < n; k++){
+      const cv = civs[k], age = simMyr - cv.born;
+      if (age >= cv.life) continue;
+      alive++;
+      const isDet = age < cv.det;
+      let br;
+      if (isDet){
+        det++;
+        br = 0.85 + 0.55 * Math.sin(t * 4.0 + cv.i * 0.7);
+        const dx = gpos[cv.i*3] - us.position.x, dy = gpos[cv.i*3+1], dz = gpos[cv.i*3+2] - us.position.z;
+        const d = Math.sqrt(dx*dx + dy*dy + dz*dz) * 1000; // 1 单位 = 1000 光年
+        if (d < nearest) nearest = d;
+      } else br = 0.16;
+      civPos[k*3] = gpos[cv.i*3]; civPos[k*3+1] = gpos[cv.i*3+1]; civPos[k*3+2] = gpos[cv.i*3+2];
+      civCol[k*3] = br; civCol[k*3+1] = br * 0.72; civCol[k*3+2] = br * 0.32;
+    }
+    cg.setDrawRange(0, n);
+    cpa.needsUpdate = true; cca.needsUpdate = true;
+    if (frame++ % 10 === 0){
+      $('s3-myr').textContent = Math.round(simMyr).toLocaleString('zh-CN');
+      $('s3-alive').textContent = alive;
+      $('s3-det').textContent = det;
+      $('s3-near').textContent = det > 0
+        ? '约 ' + (nearest >= 10000 ? (nearest / 10000).toFixed(1) + ' 万' : Math.round(nearest).toLocaleString('zh-CN')) + ' 光年'
+        : '—（大沉默中……）';
+    }
+  }
+  return { scene, camera, controls, update, bloomStrength: 0.85 };
+})();
+
+/* ================= S4 洛希极限 ================= */
+scenes.s4 = (() => {
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(50, innerWidth/innerHeight, 0.1, 1000);
+  camera.position.set(0, 6.5, 13);
+  const controls = new OrbitControls(camera, renderer.domElement);
+  controls.enableDamping = true; controls.dampingFactor = 0.06;
+  scene.add(makeStarfield());
+
+  const key = new THREE.DirectionalLight(0xffe0b0, 1.8); key.position.set(6, 5, 8); scene.add(key);
+  scene.add(new THREE.AmbientLight(0x30364a, 0.9));
+
+  const R_PLANET = 1, GM = 20;
+  const planet = new THREE.Mesh(new THREE.SphereGeometry(R_PLANET, 48, 48),
+    new THREE.MeshPhongMaterial({ color: 0xc77b3f, emissive: 0x1d0e04, shininess: 12 }));
+  planet.add(makeGlow(0xff9a4d, 3.4, 0.55));
+  scene.add(planet);
+
+  const moon = new THREE.Mesh(new THREE.SphereGeometry(0.15, 24, 24),
+    new THREE.MeshPhongMaterial({ color: 0xbfc8d8, emissive: 0x101418, shininess: 30 }));
+  scene.add(moon);
+
+  // 洛希极限虚线环
+  let rocheLine = null;
+  function rocheRadius(){ return 2.44 * R_PLANET * Math.cbrt(parseFloat($('s4-rho').value)); }
+  function buildRing(radius, color, dashed){
+    const seg = 160, pos = new Float32Array((seg + 1) * 3);
+    for (let i = 0; i <= seg; i++){
+      const a = i / seg * Math.PI * 2;
+      pos[i*3] = Math.cos(a) * radius; pos[i*3+1] = 0; pos[i*3+2] = Math.sin(a) * radius;
+    }
+    const g = new THREE.BufferGeometry();
+    g.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+    const m = dashed
+      ? new THREE.LineDashedMaterial({ color, dashSize: 0.22, gapSize: 0.16, transparent: true, opacity: 0.95 })
+      : new THREE.LineBasicMaterial({ color, transparent: true, opacity: 0.28 });
+    const l = new THREE.Line(g, m);
+    if (dashed) l.computeLineDistances();
+    return l;
+  }
+  function refreshRoche(){
+    if (rocheLine){ scene.remove(rocheLine); rocheLine.geometry.dispose(); rocheLine.material.dispose(); }
+    rocheLine = buildRing(rocheRadius(), 0xff5f45, true);
+    scene.add(rocheLine);
+  }
+  refreshRoche();
+  let orbitLine = buildRing(4.6, 0x7fd8ff, false); scene.add(orbitLine);
+
+  // 碎屑粒子
+  const NP = 700;
+  const pPos = new Float32Array(NP * 3), pCol = new Float32Array(NP * 3), pVel = new Float32Array(NP * 3);
+  const pg = new THREE.BufferGeometry();
+  const ppa = new THREE.BufferAttribute(pPos, 3); ppa.setUsage(THREE.DynamicDrawUsage);
+  const pca = new THREE.BufferAttribute(pCol, 3); pca.setUsage(THREE.DynamicDrawUsage);
+  pg.setAttribute('position', ppa); pg.setAttribute('color', pca);
+  pg.setDrawRange(0, 0);
+  const debris = new THREE.Points(pg, new THREE.PointsMaterial({ size:0.13, map:DISC, vertexColors:true,
+    transparent:true, blending:THREE.AdditiveBlending, depthWrite:false }));
+  debris.frustumCulled = false;
+  scene.add(debris);
+
+  let mode = 'intact'; // intact | stretch | shattered
+  let theta = 0, orbitR = 4.6, stretchT = 0, shatterT = 0;
+  const moonPos = new THREE.Vector3(), moonVel = new THREE.Vector3();
+
+  function resetMoon(){
+    mode = 'intact'; stretchT = 0; shatterT = 0;
+    theta = 0; orbitR = parseFloat($('s4-orbit').value);
+    moon.visible = true; moon.scale.set(1, 1, 1);
+    pg.setDrawRange(0, 0);
+    $('s4-status').textContent = '安全轨道';
+  }
+  $('s4-reset').addEventListener('click', resetMoon);
+  bindRange('s4-orbit', 's4-orbitv', v => v.toFixed(2), v => {
+    scene.remove(orbitLine); orbitLine.geometry.dispose(); orbitLine.material.dispose();
+    orbitLine = buildRing(v, 0x7fd8ff, false); scene.add(orbitLine);
+  });
+  bindRange('s4-rho', 's4-rhov', v => v.toFixed(2), refreshRoche);
+
+  function shatter(){
+    mode = 'shattered'; shatterT = 0;
+    moon.visible = false;
+    const radial = moonPos.clone().normalize();
+    const tang = moonVel.clone().normalize();
+    const cc = new THREE.Color();
+    for (let k = 0; k < NP; k++){
+      pPos[k*3]   = moonPos.x + randn() * 0.1;
+      pPos[k*3+1] = moonPos.y + randn() * 0.08;
+      pPos[k*3+2] = moonPos.z + randn() * 0.1;
+      const sp = randn() * 0.30;
+      pVel[k*3]   = moonVel.x + tang.x * sp + radial.x * randn() * 0.22;
+      pVel[k*3+1] = moonVel.y + randn() * 0.12;
+      pVel[k*3+2] = moonVel.z + tang.z * sp + radial.z * randn() * 0.22;
+      if (Math.random() < 0.7) cc.setHSL(0.07 + Math.random() * 0.05, 0.65, 0.55 + Math.random() * 0.3);
+      else cc.setHSL(0.55, 0.25, 0.6 + Math.random() * 0.2);
+      pCol[k*3] = cc.r; pCol[k*3+1] = cc.g; pCol[k*3+2] = cc.b;
+    }
+    pg.setDrawRange(0, NP);
+    $('s4-status').textContent = '已瓦解 — 碎屑正在引力剪切下散开成弧';
+  }
+
+  let frame = 0;
+  function update(dt){
+    controls.update();
+    const d = rocheRadius();
+    if (mode !== 'shattered'){
+      const target = parseFloat($('s4-orbit').value);
+      orbitR += (target - orbitR) * Math.min(1, dt * 0.7);
+      const omega = Math.sqrt(GM / (orbitR * orbitR * orbitR));
+      theta += omega * dt;
+      const px = Math.cos(theta) * orbitR, pz = Math.sin(theta) * orbitR;
+      moonPos.set(px, 0, pz);
+      moonVel.set(-Math.sin(theta), 0, Math.cos(theta)).multiplyScalar(omega * orbitR);
+      moon.position.copy(moonPos);
+      const radial = moonPos.clone().normalize();
+      moon.quaternion.setFromUnitVectors(new THREE.Vector3(1, 0, 0), radial);
+      if (orbitR < d){
+        if (mode === 'intact'){ mode = 'stretch'; stretchT = 0; }
+        stretchT += dt;
+        const s = Math.min(1, stretchT / 1.5);
+        moon.scale.set(1 + 2.2 * s, 1 - 0.45 * s, 1 - 0.45 * s); // 沿径向潮汐拉伸
+        $('s4-status').textContent = '已越过极限！潮汐拉伸中……';
+        if (stretchT > 1.5) shatter();
+      } else {
+        if (mode === 'stretch'){ mode = 'intact'; }
+        stretchT = Math.max(0, stretchT - dt * 2);
+        const s = Math.min(1, stretchT / 1.5);
+        moon.scale.set(1 + 2.2 * s, 1 - 0.45 * s, 1 - 0.45 * s);
+        $('s4-status').textContent = '安全轨道';
+      }
+    } else {
+      shatterT += dt;
+      const sub = 2, h = dt / sub;
+      for (let s2 = 0; s2 < sub; s2++){
+        for (let k = 0; k < NP; k++){
+          const x = pPos[k*3], y = pPos[k*3+1], z = pPos[k*3+2];
+          const r = Math.sqrt(x*x + y*y + z*z);
+          if (r < 0.9){ // 落入行星
+            pPos[k*3+1] = 9999; pVel[k*3] = pVel[k*3+1] = pVel[k*3+2] = 0;
+            pCol[k*3] = pCol[k*3+1] = pCol[k*3+2] = 0;
+            continue;
+          }
+          const a = -GM / (r * r * r);
+          pVel[k*3] += a * x * h; pVel[k*3+1] += a * y * h; pVel[k*3+2] += a * z * h;
+          pPos[k*3] += pVel[k*3] * h; pPos[k*3+1] += pVel[k*3+1] * h; pPos[k*3+2] += pVel[k*3+2] * h;
+        }
+      }
+      if (shatterT > 30) $('s4-status').textContent = '碎屑弧已成形 — 点击「重置卫星」再来一次';
+    }
+    ppa.needsUpdate = true; pca.needsUpdate = true;
+    if (frame++ % 10 === 0){
+      $('s4-dist').textContent = mode === 'shattered' ? '—（已碎裂）' : orbitR.toFixed(2);
+      $('s4-roche').textContent = d.toFixed(2);
+    }
+  }
+  resetMoon();
+  return { scene, camera, controls, update, bloomStrength: 1.0 };
+})();
+
+/* ================= S5 引力弹弓（限制性三体 RK4） ================= */
+scenes.s5 = (() => {
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(50, innerWidth/innerHeight, 0.1, 2000);
+  camera.position.set(-4, 26, 30);
+  const controls = new OrbitControls(camera, renderer.domElement);
+  controls.enableDamping = true; controls.dampingFactor = 0.06;
+  scene.add(makeStarfield());
+  scene.add(new THREE.AmbientLight(0x334, 0.7));
+
+  const GMs = 1000, GMp = 3.0, Rp = 8, PLANET_R = 0.5, STAR_R = 1.2;
+  const omega = Math.sqrt(GMs / (Rp * Rp * Rp));
+
+  const star = new THREE.Mesh(new THREE.SphereGeometry(1.2, 32, 32),
+    new THREE.MeshBasicMaterial({ color: 0xffe6b0 }));
+  star.add(makeGlow(0xffc46b, 7, 0.9));
+  scene.add(star);
+  const planet = new THREE.Mesh(new THREE.SphereGeometry(PLANET_R, 24, 24),
+    new THREE.MeshBasicMaterial({ color: 0x86d8ff }));
+  planet.add(makeGlow(0x6fc8ff, 1.8, 0.7));
+  scene.add(planet);
+
+  // 行星轨道参考线
+  {
+    const seg = 200, pos = new Float32Array((seg + 1) * 3);
+    for (let i = 0; i <= seg; i++){
+      const a = i / seg * Math.PI * 2;
+      pos[i*3] = Math.cos(a) * Rp; pos[i*3+1] = 0; pos[i*3+2] = Math.sin(a) * Rp;
+    }
+    const g = new THREE.BufferGeometry();
+    g.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+    scene.add(new THREE.Line(g, new THREE.LineBasicMaterial({ color: 0x4a90b8, transparent: true, opacity: 0.3 })));
+  }
+
+  const craft = new THREE.Mesh(new THREE.ConeGeometry(0.14, 0.42, 10),
+    new THREE.MeshBasicMaterial({ color: 0xffc46b }));
+  craft.add(makeGlow(0xffb050, 0.9, 0.8));
+  craft.visible = false;
+  scene.add(craft);
+  const trail = makeTrail(1600, 0xffb050); scene.add(trail.line);
+
+  const velArrow = new THREE.ArrowHelper(new THREE.Vector3(1, 0, 0), new THREE.Vector3(), 2, 0xffb050, 0.45, 0.25);
+  velArrow.visible = false; scene.add(velArrow);
+  const planetArrow = new THREE.ArrowHelper(new THREE.Vector3(0, 0, 1), new THREE.Vector3(), 1.4, 0x6fc8ff, 0.35, 0.2);
+  scene.add(planetArrow);
+
+  // 状态：行星解析圆轨道 + 航天器 RK4（state=[x,y,vx,vy]，平面 XY→世界 XZ）
+  const st = new Float64Array(4);
+  const k1 = new Float64Array(4), k2 = new Float64Array(4), k3 = new Float64Array(4),
+        k4 = new Float64Array(4), acc = new Float64Array(4), tmp = new Float64Array(4);
+  let pAng = 0.6, flying = false, done = false, vIn = 0, simT = 0, launchT = 0;
+  let insideSOI = false, vBeforeEnc = 0, dvEnc = null;
+  const START = { x: -20, y: 2 };
+
+  function planetPos(a){ return { x: Math.cos(a) * Rp, y: Math.sin(a) * Rp }; }
+  function craftAcc(x, y, pa, out){
+    const r2 = x*x + y*y;
+    const r3 = Math.pow(r2, 1.5);
+    let ax = -GMs * x / r3, ay = -GMs * y / r3;
+    const pp = planetPos(pa);
+    const dx = pp.x - x, dy = pp.y - y;
+    const d3 = Math.pow(dx*dx + dy*dy + 1e-9, 1.5);
+    ax += GMp * dx / d3; ay += GMp * dy / d3;
+    out[0] = ax; out[1] = ay;
+  }
+  function deriv(s, pa, out){
+    craftAcc(s[0], s[1], pa, acc);
+    out[0] = s[2]; out[1] = s[3]; out[2] = acc[0]; out[3] = acc[1];
+  }
+  const ca = new Float64Array(2);
+  function rk4(dt){ // 行星角在步内近似冻结（步长极小）
+    deriv(st, pAng, k1);
+    for (let i = 0; i < 4; i++) tmp[i] = st[i] + 0.5 * dt * k1[i];
+    deriv(tmp, pAng, k2);
+    for (let i = 0; i < 4; i++) tmp[i] = st[i] + 0.5 * dt * k2[i];
+    deriv(tmp, pAng, k3);
+    for (let i = 0; i < 4; i++) tmp[i] = st[i] + dt * k3[i];
+    deriv(tmp, pAng, k4);
+    for (let i = 0; i < 4; i++) st[i] += dt / 6 * (k1[i] + 2*k2[i] + 2*k3[i] + k4[i]);
+  }
+
+  function setStatus(s){ $('s5-status').textContent = s; }
+  function launch(){
+    const v = parseFloat($('s5-v').value), b = parseFloat($('s5-b').value);
+    // 预估相遇时刻（迭代 3 次提前量），再叠加垂直瞄准偏移 b
+    let t = Math.hypot(START.x, START.y) / v;
+    for (let it = 0; it < 3; it++){
+      const pp = planetPos(pAng + omega * t); // pAng 已是绝对相位
+      t = Math.hypot(pp.x - START.x, pp.y - START.y) / v;
+    }
+    const pp = planetPos(pAng + omega * t);
+    let dx = pp.x - START.x, dy = pp.y - START.y;
+    const len = Math.hypot(dx, dy);
+    dx /= len; dy /= len;
+    const ax = pp.x - dy * b, ay = pp.y + dx * b; // 瞄准点 = 预测行星位置 + 垂直偏移 b
+    let vx = ax - START.x, vy = ay - START.y;
+    const vl = Math.hypot(vx, vy);
+    st[0] = START.x; st[1] = START.y;
+    st[2] = vx / vl * v; st[3] = vy / vl * v;
+    vIn = v; flying = true; done = false;
+    launchT = simT; insideSOI = false; dvEnc = null;
+    trail.reset();
+    craft.visible = true; velArrow.visible = true;
+    $('s5-vin').textContent = v.toFixed(2);
+    $('s5-dv').textContent = '—';
+    setStatus('飞行中 — 正在接近行星……');
+  }
+  $('s5-launch').addEventListener('click', launch);
+  $('s5-reset').addEventListener('click', () => {
+    flying = false; done = false; pAng = 0.6; simT = 0; dvEnc = null; insideSOI = false;
+    craft.visible = false; velArrow.visible = false; trail.reset();
+    $('s5-vin').textContent = '—'; $('s5-vnow').textContent = '—'; $('s5-dv').textContent = '—';
+    setStatus('待命 — 调准 b，然后发射');
+  });
+  bindRange('s5-b', 's5-bv', v => v.toFixed(2));
+  bindRange('s5-v', 's5-vv', v => v.toFixed(1));
+
+  let frame = 0;
+  function update(dt){
+    controls.update();
+    const sub = 12, h = 0.002;
+    for (let s2 = 0; s2 < sub; s2++){
+      pAng += omega * h;
+      if (flying && !done) rk4(h);
+    }
+    simT += sub * h;
+    const pp = planetPos(pAng);
+    planet.position.set(pp.x, 0, pp.y);
+    planetArrow.position.copy(planet.position);
+    planetArrow.setDirection(new THREE.Vector3(-Math.sin(pAng), 0, Math.cos(pAng)));
+    if (flying){
+      const cx = st[0], cy = st[1];
+      const cvx = st[2], cvy = st[3];
+      const spd = Math.hypot(cvx, cvy);
+      craft.position.set(cx, 0, cy);
+      if (spd > 1e-6){
+        craft.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0),
+          new THREE.Vector3(cvx / spd, 0, cvy / spd));
+        velArrow.position.copy(craft.position);
+        velArrow.setDirection(new THREE.Vector3(cvx / spd, 0, cvy / spd));
+        velArrow.setLength(Math.min(5, spd * 0.35), 0.4, 0.22);
+      }
+      if (!done) trail.push(craft.position);
+      if (!done){
+        const dp = Math.hypot(pp.x - cx, pp.y - cy);
+        const rs = Math.hypot(cx, cy);
+        // 相遇前后测速（进入/离开行星 3 单位范围），隔离行星弹弓效应
+        if (!insideSOI && dp < 3){ insideSOI = true; vBeforeEnc = spd; }
+        else if (insideSOI && dp > 3){ insideSOI = false; dvEnc = spd - vBeforeEnc; }
+        if (dp < PLANET_R){
+          done = true;
+          setStatus('撞上行星了 — 任务失败，调整 b 再试');
+        } else if (rs < STAR_R){
+          done = true;
+          setStatus('坠入恒星 — 入射太直，加大 v∞ 或调整 b');
+        } else if (rs > 34){
+          done = true;
+          if (dvEnc !== null){
+            setStatus('已飞出引力场 — ' + (dvEnc >= 0 ? '弹弓加速成功！' : '被行星减速了（从另一侧过试试）'));
+            $('s5-dv').textContent = (dvEnc >= 0 ? '+' : '') + dvEnc.toFixed(2) + '（弹弓效应）';
+          } else {
+            setStatus('已飞出引力场 — 但未与行星相遇，调整 b 缩小相遇距离');
+            $('s5-dv').textContent = '0（未相遇）';
+          }
+          $('s5-vnow').textContent = spd.toFixed(2);
+        } else if (simT - launchT > 50){
+          done = true;
+          setStatus('被恒星引力束缚，未能逃逸 — 重置后再试');
+          $('s5-vnow').textContent = spd.toFixed(2);
+        }
+      }
+      if (frame++ % 6 === 0 && !done){
+        $('s5-vnow').textContent = spd.toFixed(2);
+      }
+    }
+  }
+  return { scene, camera, controls, update, bloomStrength: 0.95 };
+})();
+
+/* ================= 主循环 & 尺寸 ================= */
+const clock = new THREE.Clock();
+function loop(){
+  requestAnimationFrame(loop);
+  const rawDt = clock.getDelta();
+  const dt = Math.min(rawDt, 0.05);
+  const s = scenes[activeId];
+  if (s && s.update) s.update(dt, clock.elapsedTime);
+  if (activeId === 's2' && scenes.s2.probe) scenes.s2.probe(rawDt * 1000);
+  composer.render();
+}
+function onResize(){
+  const w = innerWidth, h = innerHeight;
+  renderer.setSize(w, h);
+  composer.setSize(w, h);
+  for (const id in scenes){
+    const s = scenes[id];
+    if (s.camera && s.camera.isPerspectiveCamera){
+      s.camera.aspect = w / h; s.camera.updateProjectionMatrix();
+    }
+    if (s.resize) s.resize(w, h);
+  }
+}
+window.addEventListener('resize', onResize);
+onResize();
+switchTo('s2'); switchTo('s1'); // 初始化渲染状态到 S1
+// 支持 #s1..#s5 深链直达场景（便于分享与验证）
+if (location.hash && scenes[location.hash.slice(1)]) switchTo(location.hash.slice(1));
+addEventListener('hashchange', () => { const id = location.hash.slice(1); if (scenes[id]) switchTo(id); });
+document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () => history.replaceState(null, '', '#' + t.dataset.id)));
+loop();
+</script>
+</body>
+</html>
