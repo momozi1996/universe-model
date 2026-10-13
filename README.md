@@ -17,7 +17,7 @@
 
 ## 🌌 MOMO Universe Model 3D 演示
 
-单文件 Three.js/WebGL 实现
+单文件 Three.js/WebGL 实现[html体验](https://github.com/momozi1996/universe-model/blob/main/universe-demo/index.html)
 
 | 场景 | 实现 | 验证状态 |
 |---|---|---|
